@@ -184,7 +184,7 @@
 
 <header class="site-header">
   <h1>Black-Owned Businesses — Southern California</h1>
-  <p>Orange, Los Angeles, Riverside &amp; San Bernardino counties &nbsp;·&nbsp; <span id="totalCount">46</span> verified businesses</p>
+  <p>Orange, Los Angeles, Riverside &amp; San Bernardino counties &nbsp;·&nbsp; <span id="totalCount">54</span> verified businesses</p>
 </header>
 
 <main class="container">
@@ -220,6 +220,7 @@
             <option value="34.0195,-118.4912">Santa Monica</option>
             <option value="34.1478,-118.1445">Pasadena</option>
             <option value="34.0633,-117.7497">Pomona</option>
+            <option value="34.0968,-117.7197">Claremont</option>
             <option value="34.1868,-118.3830">North Hollywood</option>
           </optgroup>
           <optgroup label="Riverside County">
@@ -305,6 +306,7 @@ const B = [
   {n:"Georgia's Restaurant",ty:"Food & Dining",co:"Orange County",ci:"Anaheim",ad:"440 S Anaheim Blvd #209A, Anaheim 92805",la:33.8330,lo:-117.9120,d:"Southern soul food in the Anaheim Packing House",ph:"(714) 603-3218"},
   {n:"Roscoe's House of Chicken & Waffles",ty:"Food & Dining",co:"Orange County",ci:"Anaheim",ad:"2110 S Harbor Blvd, Anaheim 92802",la:33.7940,lo:-117.9380,d:"Iconic soul food chain founded 1975",ph:"(714) 823-4130"},
   {n:"Parfait Paris",ty:"Food & Dining",co:"Orange County",ci:"Anaheim",ad:"440 S Anaheim Blvd #214, Anaheim 92805",la:33.8330,lo:-117.9120,d:"French bakery, crêpes & desserts in the Packing House",ph:""},
+  {n:"Poppy & Seed",ty:"Food & Dining",co:"Orange County",ci:"Anaheim",ad:"350 S Anaheim Blvd, Anaheim 92805",la:33.8325,lo:-117.9125,d:"Upscale farm-to-table fine dining in downtown Anaheim",ph:""},
   {n:"Brothas Cookies",ty:"Food & Dining",co:"Orange County",ci:"Orange",ad:"1235 W Town & Country Rd, Orange 92868",la:33.7870,lo:-117.8810,d:"Artisan cookie bakery",ph:""},
   {n:"Raised by Lions Coffee",ty:"Food & Dining",co:"Orange County",ci:"Tustin",ad:"1631 Edinger Ave #101, Tustin 92780",la:33.7100,lo:-117.7960,d:"Specialty coffee roaster & café",ph:""},
   {n:"Tribute Coffee House",ty:"Food & Dining",co:"Orange County",ci:"Garden Grove",ad:"13960 Harbor Blvd, Garden Grove 92843",la:33.7720,lo:-117.9430,d:"Community-focused independent coffee house",ph:""},
@@ -335,6 +337,11 @@ const B = [
   {n:"Malik Books",ty:"Retail & Books",co:"Los Angeles County",ci:"Los Angeles",ad:"3650 W MLK Jr Blvd #245, Los Angeles 90008",la:34.0100,lo:-118.3370,d:"Beloved bookstore at Baldwin Hills Crenshaw Plaza",ph:""},
   {n:"Reparations Club",ty:"Retail & Books",co:"Los Angeles County",ci:"Los Angeles",ad:"3054 S Victoria Ave, Los Angeles 90016",la:34.0290,lo:-118.3460,d:"Concept bookshop & creative space curated by Blackness",ph:""},
   {n:"Octavia's Bookshelf",ty:"Retail & Books",co:"Los Angeles County",ci:"Pasadena",ad:"1353 N Hill Ave, Pasadena 91104",la:34.1660,lo:-118.1030,d:"BIPOC-focused indie bookstore named for Octavia E. Butler",ph:""},
+  {n:"The Quarter Creole Cuisine",ty:"Food & Dining",co:"Los Angeles County",ci:"Claremont",ad:"201 N Indian Hill Blvd #103, Claremont 91711",la:34.0968,lo:-117.7197,d:"Acclaimed New Orleans-style Creole cooking",ph:""},
+  {n:"Simply Wholesome",ty:"Health & Wellness",co:"Los Angeles County",ci:"Los Angeles",ad:"4508 W Slauson Ave, Los Angeles 90043",la:33.9890,lo:-118.3540,d:"Health-food market & restaurant in Windsor Hills since 1984",ph:"(323) 294-2144"},
+  {n:"Hot and Cool Cafe",ty:"Food & Dining",co:"Los Angeles County",ci:"Los Angeles",ad:"4331 Degnan Blvd, Los Angeles 90008",la:34.0090,lo:-118.3270,d:"Vegan café & community hub in Leimert Park Village",ph:""},
+  {n:"1010 Wine & Events",ty:"Food & Dining",co:"Los Angeles County",ci:"Inglewood",ad:"1010 N La Brea Ave, Inglewood 90302",la:33.9710,lo:-118.3530,d:"Inglewood's first Black & women-owned wine bar",ph:""},
+  {n:"Shades of Afrika",ty:"Retail & Books",co:"Los Angeles County",ci:"Long Beach",ad:"1001 E 4th St, Long Beach 90802",la:33.7718,lo:-118.1795,d:"Books, gifts, art & cultural goods",ph:"(562) 436-2210"},
   {n:"GLAAACC",ty:"Professional Services",co:"Los Angeles County",ci:"Los Angeles",ad:"Regional — glaaacc.org",la:34.0089,lo:-118.3400,d:"Greater LA African American Chamber of Commerce",ph:""},
 
   // RIVERSIDE COUNTY
@@ -352,6 +359,9 @@ const B = [
   {n:"Johnsons Garden",ty:"Health & Wellness",co:"San Bernardino County",ci:"Redlands",ad:"Vegan pop-up at Slow Bloom Coffee, Redlands",la:34.0556,lo:-117.1825,d:"Plant-based vegan meal prep & baked goods",ph:""},
   {n:"Beola's Southern Cuisine",ty:"Food & Dining",co:"San Bernardino County",ci:"Ontario",ad:"Ontario — call for current location",la:34.0633,lo:-117.6509,d:"Classic Southern home cooking",ph:""},
   {n:"Roc's Creole Seafood",ty:"Food & Dining",co:"San Bernardino County",ci:"Fontana",ad:"Fontana — call for current location",la:34.0922,lo:-117.4350,d:"Creole-style seafood dishes",ph:""},
+  {n:"Not Your Mamas Kitchen",ty:"Food & Dining",co:"San Bernardino County",ci:"Ontario",ad:"1919 E Riverside Dr, Ontario 91761",la:34.0470,lo:-117.6010,d:"Soul food restaurant, caterer & event space",ph:"(909) 619-6965"},
+  {n:"A Beautiful Newness",ty:"Beauty & Hair",co:"San Bernardino County",ci:"San Bernardino",ad:"168 S E St, Ste B, San Bernardino 92401",la:34.1040,lo:-117.2930,d:"Award-winning hair salon & barbershop",ph:""},
+  {n:"Edge.Wise Barbershop & Braiding Salon",ty:"Beauty & Hair",co:"San Bernardino County",ci:"San Bernardino",ad:"650 S E St, Ste C, San Bernardino 92408",la:34.0960,lo:-117.2920,d:"Cuts, braids, cornrows & full braiding services",ph:""},
   {n:"Black Chamber of Commerce IE",ty:"Professional Services",co:"San Bernardino County",ci:"San Bernardino",ad:"Regional — Inland Empire",la:34.1083,lo:-117.2898,d:"Networking, education & partnerships across the IE",ph:""},
 ];
 
