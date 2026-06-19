@@ -3,9 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Find Black-owned businesses across Orange, Los Angeles, Riverside, and San Bernardino counties in Southern California. Verified street addresses, filter by type, city, and radius.">
+<meta name="description" content="Find Black-owned businesses across Orange, Los Angeles, Riverside, and San Bernardino counties in Southern California. Verified street addresses, interactive map, search by name, and filter by drive time, type, and city.">
 <title>Black-Owned Businesses — Southern California</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -172,11 +174,39 @@
 
   .site-footer { text-align: center; padding: 2rem; font-size: 12px; color: var(--text3); }
 
+  .search-wrap { position: relative; margin-bottom: 1.25rem; }
+  .search-wrap i { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 15px; }
+  #search {
+    width: 100%; padding: 8px 12px 8px 32px; font-size: 13px; font-family: inherit;
+    color: var(--text); background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 8px;
+  }
+  #search:focus { outline: none; border-color: var(--text3); }
+
+  .geo-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px;
+    font-size: 12px; font-family: inherit; cursor: pointer; white-space: nowrap;
+    color: var(--text); background: var(--bg2); border: 0.5px solid var(--border2); border-radius: 8px;
+  }
+  .btn:hover { border-color: var(--text3); }
+  .btn.on { background: #185FA5; color: #fff; border-color: #185FA5; }
+  .geo-status { font-size: 11px; color: var(--text3); margin-top: 6px; min-height: 14px; }
+
+  #map { height: 360px; width: 100%; border-radius: var(--radius); border: 0.5px solid var(--border); margin-bottom: 1rem; z-index: 0; }
+  .leaflet-popup-content { font-family: inherit; font-size: 12px; line-height: 1.5; }
+  .leaflet-popup-content a { color: #185FA5; }
+
+  .card-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; }
+  .card-links a { font-size: 11px; color: #185FA5; text-decoration: none; display: inline-flex; align-items: center; gap: 3px; }
+  .card-links a:hover { text-decoration: underline; }
+  .card-links i { font-size: 12px; }
+
   @media (max-width: 600px) {
     .site-header { padding: 1.25rem 1rem; }
     .container { padding: 1rem; }
     .controls { padding: 1rem; }
     .grid { grid-template-columns: 1fr; }
+    #map { height: 260px; }
   }
 </style>
 </head>
@@ -195,9 +225,14 @@
   </div>
 
   <div class="controls">
+    <div class="search-wrap">
+      <i class="ti ti-search" aria-hidden="true"></i>
+      <input type="text" id="search" placeholder="Search by name, city, or keyword…" autocomplete="off" aria-label="Search businesses">
+    </div>
     <div class="control-row">
       <div class="control-group">
         <label>Search from</label>
+        <div class="geo-row">
         <select id="citySelect">
           <optgroup label="Orange County">
             <option value="33.9167,-117.9000">Brea</option>
@@ -237,6 +272,9 @@
             <option value="34.0922,-117.4350">Fontana</option>
           </optgroup>
         </select>
+        <button id="geoBtn" class="btn" type="button"><i class="ti ti-current-location" aria-hidden="true"></i> Use my location</button>
+        </div>
+        <div class="geo-status" id="geoStatus"></div>
       </div>
       <div class="control-group">
         <label>Max drive time</label>
@@ -254,6 +292,7 @@
     <div class="pills" id="typePills"></div>
   </div>
 
+  <div id="map" aria-label="Map of businesses"></div>
   <div class="meta" id="meta"></div>
   <div class="grid" id="grid"></div>
 
@@ -367,6 +406,41 @@ const B = [
 
 document.getElementById("totalCount").textContent = B.length;
 
+// Official websites (only where confidently verified). Keyed by business name.
+const WEB = {
+  "Georgia's Restaurant":"https://georgias-restaurant.com",
+  "Roscoe's House of Chicken & Waffles":"https://www.roscoeschickenandwaffles.com",
+  "Parfait Paris":"https://parfaitparis.com",
+  "Poppy & Seed":"https://www.poppyandseedoc.com",
+  "Raised by Lions Coffee":"https://raisedbylionscoffeeroasters.com",
+  "Tribute Coffee House":"https://tributecoffeehouse.com",
+  "Protein Lab":"https://fueledbyproteinlab.square.site",
+  "Dream Art Fullerton":"https://www.dreamartfullerton.com",
+  "Rock City Climbing":"https://www.rockcityclimbing.com",
+  "Woody's Bar-B-Que":"http://www.woodysbarbquela.com",
+  "Hilltop Coffee + Kitchen":"https://www.findyourhilltop.com",
+  "Patria Coffee":"https://www.patriacoffee.com",
+  "Bludso's Bar & Que":"https://www.bludsosbbq.com",
+  "Berbere":"https://myberbere.com",
+  "Stevie's Creole Cafe":"https://www.steviescreolecafe.la",
+  "Hilltop Jamaican Market & Restaurant":"https://www.hilltopjamaican.com",
+  "Malik Books":"https://malikbooks.com",
+  "Reparations Club":"https://rep.club",
+  "Octavia's Bookshelf":"https://www.octaviasbookshelf.com",
+  "The Quarter Creole Cuisine":"https://www.thequartercreole.com",
+  "1010 Wine & Events":"https://1010wineandevents.com",
+  "Shades of Afrika":"https://shadesofafrika.com",
+  "Not Your Mamas Kitchen":"https://nymkontario.my.canva.site",
+  "Back to the Grind":"https://backtothegrind.shop",
+  "Gram's BBQ":"https://gramsbbq.co",
+  "Senzational Bakery":"https://www.senzationalbakery.com",
+  "WingMan Redlands":"https://www.wingmanredlands.com",
+  "Mommie Helen's Bakery":"https://www.mommiehelens.com",
+  "Island Breeze Jamaican Cuisine":"https://www.ibjamaicancuisine.com",
+  "A Beautiful Newness":"https://www.abeautifulnewness.biz",
+  "Edge.Wise Barbershop & Braiding Salon":"https://www.edgewisebarbershop.com",
+};
+
 function hav(la1,lo1,la2,lo2){
   const R=3958.8,dL=(la2-la1)*Math.PI/180,dO=(lo2-lo1)*Math.PI/180;
   const a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dO/2)**2;
@@ -382,7 +456,13 @@ function driveMin(straightMiles){
   return roadMiles/speed*60;
 }
 
-let aC="All", aT="All";
+let aC="All", aT="All", aQ="", geo=null, map=null, markerLayer=null;
+
+const citySel=document.getElementById("citySelect");
+const radiusEl=document.getElementById("radius");
+const searchEl=document.getElementById("search");
+const geoBtn=document.getElementById("geoBtn");
+const geoStatus=document.getElementById("geoStatus");
 
 function mkPills(id,arr,active,cls,fn){
   document.getElementById(id).innerHTML=arr.map(v=>`<button class="pill ${cls}${v===active?" active":""}" onclick="${fn}(this.dataset.v)" data-v="${v}">${v}</button>`).join("");
@@ -390,29 +470,99 @@ function mkPills(id,arr,active,cls,fn){
 function setC(v){aC=v;mkPills("countyPills",COUNTIES,aC,"cpill","setC");render();}
 function setT(v){aT=v;mkPills("typePills",TYPES,aT,"","setT");render();}
 
-function mapsLink(addr){ return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(addr); }
+function origin(){
+  if(geo) return {la:geo.la,lo:geo.lo,label:"your location"};
+  const [la,lo]=citySel.value.split(",").map(Number);
+  return {la,lo,label:citySel.options[citySel.selectedIndex].text};
+}
+
+function dirLink(o,addr){ return "https://www.google.com/maps/dir/?api=1&origin="+o.la+","+o.lo+"&destination="+encodeURIComponent(addr); }
+function telHref(ph){ return "tel:+1"+ph.replace(/\D/g,""); }
+function regionalDomain(ad){ const m=ad.match(/Regional — (\S+\.\S+)/); return m?m[1]:null; }
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+// Shareable URL state
+function writeState(){
+  const p=new URLSearchParams();
+  if(!geo) p.set("city",citySel.options[citySel.selectedIndex].text);
+  p.set("time",radiusEl.value);
+  if(aC!=="All") p.set("county",aC);
+  if(aT!=="All") p.set("type",aT);
+  if(aQ) p.set("q",aQ);
+  history.replaceState(null,"","?"+p.toString());
+}
+function readState(){
+  const p=new URLSearchParams(location.search);
+  const city=p.get("city");
+  if(city){ for(const o of citySel.options){ if(o.text===city){ o.selected=true; break; } } }
+  const time=p.get("time");
+  if(time&&!isNaN(time)) radiusEl.value=time;
+  if(COUNTIES.includes(p.get("county"))) aC=p.get("county");
+  if(TYPES.includes(p.get("type"))) aT=p.get("type");
+  aQ=p.get("q")||"";
+  searchEl.value=aQ;
+}
+
+// Map
+function initMap(){
+  map=L.map("map",{scrollWheelZoom:false}).setView([33.95,-117.9],9);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);
+  markerLayer=L.layerGroup().addTo(map);
+}
+function updateMap(res,o){
+  if(!map) return;
+  markerLayer.clearLayers();
+  const pts=[];
+  res.forEach(b=>{
+    const col=(CC[b.co]||{t:"#555"}).t;
+    const m=L.circleMarker([b.la,b.lo],{radius:6,color:"#fff",weight:1.5,fillColor:col,fillOpacity:0.95});
+    m.bindPopup(`<strong>${esc(b.n)}</strong><br>${esc(b.ci)} · ~${Math.round(b.mins)} min<br><a href="${dirLink(o,b.ad)}" target="_blank" rel="noopener">Directions ↗</a>`);
+    m.addTo(markerLayer); pts.push([b.la,b.lo]);
+  });
+  const om=L.circleMarker([o.la,o.lo],{radius:9,color:"#fff",weight:2,fillColor:"#185FA5",fillOpacity:1});
+  om.bindPopup("Search origin: "+esc(o.label)); om.addTo(markerLayer); pts.push([o.la,o.lo]);
+  if(pts.length>1) map.fitBounds(pts,{padding:[40,40],maxZoom:12});
+  else map.setView([o.la,o.lo],11);
+}
 
 function render(){
-  const [la,lo]=document.getElementById("citySelect").value.split(",").map(Number);
-  const maxMin=parseInt(document.getElementById("radius").value);
+  const o=origin();
+  const maxMin=parseInt(radiusEl.value);
   document.getElementById("rval").textContent=maxMin+" min";
-  let res=B.map(b=>{const dist=hav(la,lo,b.la,b.lo);return {...b,dist,mins:driveMin(dist)};})
-    .filter(b=>b.mins<=maxMin&&(aC==="All"||b.co===aC)&&(aT==="All"||b.ty===aT))
+  const q=aQ.trim().toLowerCase();
+  let res=B.map(b=>{const dist=hav(o.la,o.lo,b.la,b.lo);return {...b,dist,mins:driveMin(dist)};})
+    .filter(b=>b.mins<=maxMin
+      &&(aC==="All"||b.co===aC)
+      &&(aT==="All"||b.ty===aT)
+      &&(!q||(b.n+" "+b.ci+" "+b.d).toLowerCase().includes(q)))
     .sort((a,b)=>a.mins-b.mins);
   const cts=[...new Set(res.map(b=>b.co))];
-  document.getElementById("meta").textContent=`${res.length} business${res.length!==1?"es":""} · ${cts.length} count${cts.length===1?"y":"ies"}`;
+  document.getElementById("meta").textContent=`${res.length} business${res.length!==1?"es":""} · ${cts.length} count${cts.length===1?"y":"ies"} · from ${o.label}`;
+  updateMap(res,o);
   const g=document.getElementById("grid");
   if(!res.length){
-    g.innerHTML=`<div class="empty"><i class="ti ti-map-pin-off" style="font-size:28px;display:block;margin-bottom:10px"></i>No businesses within about ${maxMin} min drive.<br>Try a longer drive time or changing the filters.</div>`;
-    return;
+    g.innerHTML=`<div class="empty"><i class="ti ti-map-pin-off" style="font-size:28px;display:block;margin-bottom:10px"></i>No businesses within about ${maxMin} min drive.<br>Try a longer drive time, clearing search, or changing the filters.</div>`;
+    writeState(); return;
   }
   g.innerHTML=res.map(b=>{
     const tc=TC[b.ty]||{bg:"#eee",t:"#555"};
     const cc=CC[b.co]||{bg:"#eee",t:"#555"};
     const isRegional=b.ad.startsWith("Regional");
-    const addrHtml=isRegional
-      ? `<div class="card-addr">${b.ad}</div>`
-      : `<div class="card-addr"><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px"></i> <a href="${mapsLink(b.ad)}" target="_blank" rel="noopener">${b.ad}</a></div>`;
+    let addrHtml;
+    if(isRegional){
+      const dom=regionalDomain(b.ad);
+      addrHtml=dom
+        ? `<div class="card-addr">${b.ad.replace(dom,`<a href="https://${dom}" target="_blank" rel="noopener">${dom}</a>`)}</div>`
+        : `<div class="card-addr">${b.ad}</div>`;
+    } else {
+      addrHtml=`<div class="card-addr"><i class="ti ti-map-pin" style="font-size:11px;vertical-align:-1px"></i> <a href="${dirLink(o,b.ad)}" target="_blank" rel="noopener" title="Get directions">${b.ad}</a></div>`;
+    }
+    const web=WEB[b.n];
+    const links=[];
+    if(b.ph) links.push(`<a href="${telHref(b.ph)}"><i class="ti ti-phone" aria-hidden="true"></i> ${b.ph}</a>`);
+    if(web) links.push(`<a href="${web}" target="_blank" rel="noopener"><i class="ti ti-world" aria-hidden="true"></i> Website</a>`);
+    if(!isRegional) links.push(`<a href="${dirLink(o,b.ad)}" target="_blank" rel="noopener"><i class="ti ti-navigation" aria-hidden="true"></i> Directions</a>`);
+    const linksHtml=links.length?`<div class="card-links">${links.join("")}</div>`:"";
     return `<div class="card">
       <div class="badges">
         <span class="badge" style="background:${tc.bg};color:${tc.t}">${b.ty}</span>
@@ -421,14 +571,27 @@ function render(){
       <div class="card-name">${b.n}</div>
       ${addrHtml}
       <div class="card-desc">${b.d}</div>
-      ${b.ph?`<div class="card-phone"><i class="ti ti-phone" style="font-size:11px;vertical-align:-1px"></i> ${b.ph}</div>`:""}
+      ${linksHtml}
       <div class="card-dist"><i class="ti ti-car" style="font-size:11px;vertical-align:-1px"></i> ~${Math.round(b.mins)} min drive · ${b.dist.toFixed(1)} mi</div>
     </div>`;
   }).join("");
+  writeState();
 }
 
-document.getElementById("citySelect").addEventListener("change",render);
-document.getElementById("radius").addEventListener("input",render);
+geoBtn.addEventListener("click",()=>{
+  if(!navigator.geolocation){ geoStatus.textContent="Geolocation not supported on this device."; return; }
+  geoStatus.textContent="Locating…";
+  navigator.geolocation.getCurrentPosition(
+    pos=>{ geo={la:pos.coords.latitude,lo:pos.coords.longitude}; geoStatus.textContent="Using your current location."; geoBtn.classList.add("on"); render(); },
+    ()=>{ geoStatus.textContent="Couldn't get your location — using the selected city."; }
+  );
+});
+citySel.addEventListener("change",()=>{ geo=null; geoBtn.classList.remove("on"); geoStatus.textContent=""; render(); });
+radiusEl.addEventListener("input",render);
+searchEl.addEventListener("input",()=>{ aQ=searchEl.value; render(); });
+
+readState();
+initMap();
 mkPills("countyPills",COUNTIES,aC,"cpill","setC");
 mkPills("typePills",TYPES,aT,"","setT");
 render();
