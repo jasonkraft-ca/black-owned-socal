@@ -191,7 +191,7 @@
 
   <div class="note">
     <i class="ti ti-circle-check" style="font-size:14px;vertical-align:-2px;margin-right:5px;color:#185FA5"></i>
-    Every listing below has a <strong>verified street address</strong> and was confirmed open as of June 2026. Businesses that had closed or moved were removed. Tap any address to open it in maps. Listings change often — please call ahead, and use the directories at the bottom to find more.
+    Every listing below has a <strong>verified street address</strong> and was confirmed open as of June 2026. Businesses that had closed or moved were removed. Tap any address to open it in maps. Drive times are <strong>rough estimates</strong> (typical traffic, not live) — check your maps app for real-time routing. Listings change often, so please call ahead.
   </div>
 
   <div class="controls">
@@ -239,10 +239,10 @@
         </select>
       </div>
       <div class="control-group">
-        <label>Radius</label>
+        <label>Max drive time</label>
         <div class="radius-row">
-          <input type="range" id="radius" min="5" max="100" step="5" value="40">
-          <span class="rval" id="rval">40 mi</span>
+          <input type="range" id="radius" min="5" max="90" step="5" value="45">
+          <span class="rval" id="rval">45 min</span>
         </div>
       </div>
     </div>
@@ -373,6 +373,15 @@ function hav(la1,lo1,la2,lo2){
   return R*2*Math.asin(Math.sqrt(a));
 }
 
+// Estimate typical SoCal door-to-door drive time (minutes) from straight-line miles.
+// Road distance ≈ 1.35× straight line; average speed ramps from ~24 mph on short
+// surface-street hops toward ~48 mph on longer freeway trips.
+function driveMin(straightMiles){
+  const roadMiles=straightMiles*1.35;
+  const speed=48-24*Math.exp(-roadMiles/14);
+  return roadMiles/speed*60;
+}
+
 let aC="All", aT="All";
 
 function mkPills(id,arr,active,cls,fn){
@@ -385,16 +394,16 @@ function mapsLink(addr){ return "https://www.google.com/maps/search/?api=1&query
 
 function render(){
   const [la,lo]=document.getElementById("citySelect").value.split(",").map(Number);
-  const r=parseInt(document.getElementById("radius").value);
-  document.getElementById("rval").textContent=r+" mi";
-  let res=B.map(b=>({...b,dist:hav(la,lo,b.la,b.lo)}))
-    .filter(b=>b.dist<=r&&(aC==="All"||b.co===aC)&&(aT==="All"||b.ty===aT))
-    .sort((a,b)=>a.dist-b.dist);
+  const maxMin=parseInt(document.getElementById("radius").value);
+  document.getElementById("rval").textContent=maxMin+" min";
+  let res=B.map(b=>{const dist=hav(la,lo,b.la,b.lo);return {...b,dist,mins:driveMin(dist)};})
+    .filter(b=>b.mins<=maxMin&&(aC==="All"||b.co===aC)&&(aT==="All"||b.ty===aT))
+    .sort((a,b)=>a.mins-b.mins);
   const cts=[...new Set(res.map(b=>b.co))];
   document.getElementById("meta").textContent=`${res.length} business${res.length!==1?"es":""} · ${cts.length} count${cts.length===1?"y":"ies"}`;
   const g=document.getElementById("grid");
   if(!res.length){
-    g.innerHTML=`<div class="empty"><i class="ti ti-map-pin-off" style="font-size:28px;display:block;margin-bottom:10px"></i>No businesses found within ${r} miles.<br>Try increasing the radius or changing the filters.</div>`;
+    g.innerHTML=`<div class="empty"><i class="ti ti-map-pin-off" style="font-size:28px;display:block;margin-bottom:10px"></i>No businesses within about ${maxMin} min drive.<br>Try a longer drive time or changing the filters.</div>`;
     return;
   }
   g.innerHTML=res.map(b=>{
@@ -413,7 +422,7 @@ function render(){
       ${addrHtml}
       <div class="card-desc">${b.d}</div>
       ${b.ph?`<div class="card-phone"><i class="ti ti-phone" style="font-size:11px;vertical-align:-1px"></i> ${b.ph}</div>`:""}
-      <div class="card-dist">${b.dist.toFixed(1)} mi from search point</div>
+      <div class="card-dist"><i class="ti ti-car" style="font-size:11px;vertical-align:-1px"></i> ~${Math.round(b.mins)} min drive · ${b.dist.toFixed(1)} mi</div>
     </div>`;
   }).join("");
 }
